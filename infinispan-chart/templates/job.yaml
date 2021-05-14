@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hoover
+spec:
+  template:
+    metadata:
+      name: hoover
+    spec:
+      containers:
+      - name: hoover
+        image: {{ .Values.image.repository_op }}:{{ .Values.image.tag_op }}
+        command: ["/bin/bash"]
+        args:
+          - "-c"
+          - >
+            sleep 180;
+            curl --header "Content-Type: application/json" \
+              --request POST \
+              --data '{"replicated-cache":{"name":"work","mode":"SYNC","backups":{"backup":{"site":"{{ .Values.remotesite.name }}","strategy":"SYNC","failure-policy":"FAIL"}}}}' \
+              http://infinispan-{{ .Values.site.name }}:11222/rest/v2/caches/work
+              
+            curl --header "Content-Type: application/json" \
+              --request POST \
+              --data '{"replicated-cache":{"name":"actionTokens","mode":"SYNC","backups":{"backup":{"site":"{{ .Values.remotesite.name }}","strategy":"SYNC","failure-policy":"FAIL"}}}}' \
+              http://infinispan-{{ .Values.site.name }}:11222/rest/v2/caches/actionTokens
+              
+            curl --header "Content-Type: application/json" \
+              --request POST \
+              --data '{"replicated-cache":{"name":"clientSessions","mode":"SYNC","backups":{"backup":{"site":"{{ .Values.remotesite.name }}","strategy":"SYNC","failure-policy":"FAIL"}}}}' \
+              http://infinispan-{{ .Values.site.name }}:11222/rest/v2/caches/clientSessions
+              
+            curl --header "Content-Type: application/json" \
+              --request POST \
+              --data '{"replicated-cache":{"name":"offlineClientSessions","mode":"SYNC","backups":{"backup":{"site":"{{ .Values.remotesite.name }}","strategy":"SYNC","failure-policy":"FAIL"}}}}' \
+              http://infinispan-{{ .Values.site.name }}:11222/rest/v2/caches/offlineClientSessions
+              
+            curl --header "Content-Type: application/json" \
+              --request POST \
+              --data '{"replicated-cache":{"name":"loginFailures","mode":"SYNC","backups":{"backup":{"site":"{{ .Values.remotesite.name }}","strategy":"SYNC","failure-policy":"FAIL"}}}}' \
+              http://infinispan-{{ .Values.site.name }}:11222/rest/v2/caches/loginFailures
+              
+            curl --header "Content-Type: application/json" \
+              --request POST \
+              --data '{"replicated-cache":{"name":"sessions","mode":"SYNC","backups":{"backup":{"site":"{{ .Values.remotesite.name }}","strategy":"SYNC","failure-policy":"FAIL"}}}}' \
+              http://infinispan-{{ .Values.site.name }}:11222/rest/v2/caches/sessions
+            
+            curl --header "Content-Type: application/json" \
+              --request POST \
+              --data '{"replicated-cache":{"name":"offlineSessions","mode":"SYNC","backups":{"backup":{"site":"{{ .Values.remotesite.name }}","strategy":"SYNC","failure-policy":"FAIL"}}}}' \
+              http://infinispan-{{ .Values.site.name }}:11222/rest/v2/caches/offlineSessions
+      restartPolicy: Never

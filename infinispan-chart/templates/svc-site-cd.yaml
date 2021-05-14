@@ -1,0 +1,24 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: infinispan-sitea-site
+  namespace: infinispan-operator
+  labels:
+    app: infinispan-service-xsite
+    clusterName: infinispan-sitea
+    infinispan_cr: infinispan-sitea
+  annotations:
+    cloud.google.com/neg: '{"ingress":true}'
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+spec:
+  ports:
+    - protocol: TCP
+      port: 7900
+      targetPort: 7900
+      nodePort: 32556
+  selector:
+    app: infinispan-pod
+    clusterName: infinispan-sitea
+  type: NodePort
+  sessionAffinity: None
+  externalTrafficPolicy: Cluster

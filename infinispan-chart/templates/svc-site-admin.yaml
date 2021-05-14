@@ -1,0 +1,22 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: infinispan-sitea-admin
+  namespace: infinispan-operator
+  labels:
+    app: infinispan-service-admin
+    clusterName: infinispan-sitea
+    infinispan_cr: infinispan-sitea
+  annotations:
+    cloud.google.com/neg: '{"ingress":true}'
+spec:
+  ports:
+    - name: infinispan-adm
+      protocol: TCP
+      port: 11222
+      targetPort: 11223
+  selector:
+    app: infinispan-pod
+    clusterName: infinispan-sitea
+  type: ClusterIP
+  sessionAffinity: None

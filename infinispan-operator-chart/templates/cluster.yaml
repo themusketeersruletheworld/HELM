@@ -1,0 +1,33 @@
+apiVersion: infinispan.org/v1
+kind: Infinispan
+metadata:
+  name: infinispan-{{ .Values.site.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  security:
+    endpointAuthentication: false
+  expose:
+    type: NodePort
+  service:
+    type: DataGrid
+    sites:
+      local:
+        name: {{ .Values.site.name }}
+        hostip: {{ .Values.site.publicIP }}
+        expose:
+          type: NodePort
+          nodePort: {{ .Values.site.nodeport }}
+      locations:
+      - name: {{ .Values.site.name }}
+        url: "infinispan+xsite://{{ .Values.site.publicIP }}:{{ .Values.site.nodeport }}"
+        secretName: {{ .Values.site.secretName }}
+      - name: {{ .Values.remotesite.name }}
+        url: "infinispan+xsite://{{ .Values.remotesite.publicIP }}:{{ .Values.remotesite.nodeport }}"
+        secretName: {{ .Values.remotesite.secretName }}
+  logging: 
+    categories:
+      org.infinispan: trace
+      org.jgroups: trace
+      org.jgroups.protocols.TCP: trace
+      org.jgroups.protocols.relay.RELAY2: trace

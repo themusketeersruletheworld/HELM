@@ -1,0 +1,135 @@
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: infinispan-sitea
+  namespace: infinispan-operator
+  annotations:
+    openshift.io/display-name: Infinispan Cluster
+    openshift.io/documentation-url: 'http://infinispan.org/documentation/'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: infinispan-pod
+      clusterName: infinispan-sitea
+      infinispan_cr: infinispan-sitea
+  template:
+    metadata:
+      labels:
+        app: infinispan-pod
+        clusterName: infinispan-sitea
+        infinispan_cr: infinispan-sitea
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: infinispan-sitea-configuration
+            defaultMode: 420
+        - name: admin-identities-volume
+          secret:
+            secretName: infinispan-sitea-generated-admin-secret
+            defaultMode: 420
+      initContainers:
+        - name: data-chmod-pv
+          image: busybox
+          command:
+            - sh
+            - '-c'
+            - chmod -R g+w /opt/infinispan/server/data
+          resources: {}
+          volumeMounts:
+            - name: data-volume
+              mountPath: /opt/infinispan/server/data
+          imagePullPolicy: Always
+      containers:
+        - name: infinispan
+          image: 'infinispan/server:12.1'
+          ports:
+            - name: infinispan-adm
+              containerPort: 11223
+              protocol: TCP
+            - name: ping
+              containerPort: 8888
+              protocol: TCP
+            - name: infinispan
+              containerPort: 11222
+              protocol: TCP
+            - name: xsite
+              containerPort: 7900
+              protocol: TCP
+          env:
+            - name: CONFIG_PATH
+              value: /etc/config/infinispan.yaml
+            - name: MANAGED_ENV
+              value: 'TRUE'
+            - name: JAVA_OPTIONS
+            - name: EXTRA_JAVA_OPTIONS
+            - name: DEFAULT_IMAGE
+              value: 'infinispan/server:12.1'
+            - name: ADMIN_IDENTITIES_PATH
+              value: /etc/security/admin/identities.yaml
+            - name: CONFIG_HASH
+              value: 41e90e716dc8928a41e5eb6d532b832c1aa21247
+            - name: ADMIN_IDENTITIES_HASH
+              value: 9b104247386c5c58f863d05afa57237510a69e60
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 512Mi
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+            - name: data-volume
+              mountPath: /opt/infinispan/server/data
+            - name: admin-identities-volume
+              mountPath: /etc/security/admin
+          livenessProbe:
+            httpGet:
+              path: rest/v2/cache-managers/default/health/status
+              port: 11223
+              scheme: HTTP
+            initialDelaySeconds: 10
+            timeoutSeconds: 80
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: rest/v2/cache-managers/default/health/status
+              port: 11223
+              scheme: HTTP
+            initialDelaySeconds: 10
+            timeoutSeconds: 80
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+          startupProbe:
+            httpGet:
+              path: rest/v2/cache-managers/default/health/status
+              port: 11223
+              scheme: HTTP
+            initialDelaySeconds: 10
+            timeoutSeconds: 80
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 60
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst
+  serviceName: ''
+  volumeClaimTemplates:
+    - kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata:
+        name: data-volume
+        namespace: infinispan-operator
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+        volumeMode: Filesystem

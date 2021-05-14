@@ -1,0 +1,22 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: infinispan-sitea-ping
+  namespace: infinispan-operator
+  labels:
+    app: infinispan-service-ping
+    clusterName: infinispan-sitea
+    infinispan_cr: infinispan-sitea
+  annotations:
+    cloud.google.com/neg: '{"ingress":true}'
+spec:
+  ports:
+    - name: ping
+      protocol: TCP
+      port: 8888
+      targetPort: 8888
+  selector:
+    app: infinispan-pod
+    clusterName: infinispan-sitea
+  type: ClusterIP
+  sessionAffinity: None

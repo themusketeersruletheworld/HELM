@@ -1,0 +1,37 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: infinispan-sitea-configuration
+  namespace: infinispan-operator
+  labels:
+    app: infinispan-configmap-configuration
+    clusterName: infinispan-sitea
+    infinispan_cr: infinispan-sitea
+data:
+  infinispan.yaml: |
+    infinispan:
+      clusterName: infinispan-sitea
+      zeroCapacityNode: false
+      locks: {}
+    jgroups:
+      transport: tcp
+      dnsPing:
+        query: infinispan-sitea-ping.infinispan-operator.svc.cluster.local
+      diagnostics: false
+    xsite:
+      address: 35.239.202.198
+      name: sitea
+      port: 32556
+      backups:
+      - address: 35.232.128.94
+        name: siteb
+        port: 32556
+    logging:
+      categories:
+        org.infinispan: trace
+        org.jgroups: trace
+        org.jgroups.protocols.TCP: trace
+        org.jgroups.protocols.relay.RELAY2: trace
+    endpoints:
+      auth: false
+      dedicatedAdmin: true
